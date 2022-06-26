@@ -93,6 +93,35 @@ export function removepilot(inputData, paybw = null) {
     );
 }
 
+/*
+ * restore a pilot
+ *
+ * @param inputData object {"wallet": "", "privateKey": "", "assetId": ""}
+ * @param paybw object {"wallet": "", "privateKey": ""} | null
+ * @return Promise
+ */
+export function restorepilot(inputData, paybw = null) {
+    return transact(
+        inputData.privateKey,
+        [
+            {
+                account: "galacticgame",
+                name: "restore",
+                authorization: [
+                    {
+                        actor: inputData.wallet,
+                        permission: "active",
+                    },
+                ],
+                data: {
+                    assetid: inputData.assetId,
+                    nm: inputData.wallet
+                },
+            },
+        ],
+        paybw
+    );
+}
 
 /*
  * insert a pilot
@@ -118,38 +147,6 @@ export function insertpilot(inputData, paybw = null) {
                     assetid: inputData.assetId,
                     ind: '0',
                     type: 'pilot',
-                    nm: inputData.wallet
-                },
-            },
-        ],
-        paybw
-    );
-}
-
-/*
- * insert a ship
- *
- * @param inputData object {"wallet": "", "privateKey": "", "assetId": ""}
- * @param paybw object {"wallet": "", "privateKey": ""} | null
- * @return Promise
- */
-export function insertship(inputData, paybw = null) {
-    return transact(
-        inputData.privateKey,
-        [
-            {
-                account: "galacticgame",
-                name: "inserttoslot",
-                authorization: [
-                    {
-                        actor: inputData.wallet,
-                        permission: "active",
-                    },
-                ],
-                data: {
-                    assetid: inputData.assetId,
-                    ind: '0',
-                    type: 'ship',
                     nm: inputData.wallet
                 },
             },
@@ -231,7 +228,7 @@ export function rechargeship(inputData, paybw = null) {
  * @param paybw object {"wallet": "", "privateKey": ""} | null
  * @return Promise
  */
-export function rechargeship(inputData, paybw = null) {
+export function repairship(inputData, paybw = null) {
     return transact(
         inputData.privateKey,
         [
@@ -253,6 +250,97 @@ export function rechargeship(inputData, paybw = null) {
         paybw
     );
 }
+
+/*
+ * insert a ship
+ *
+ * @param inputData object {"wallet": "", "privateKey": "", "assetId": ""}
+ * @param paybw object {"wallet": "", "privateKey": ""} | null
+ * @return Promise
+ */
+export function insertship(inputData, paybw = null) {
+    return transact(
+        inputData.privateKey,
+        [
+            {
+                account: "galacticgame",
+                name: "inserttoslot",
+                authorization: [
+                    {
+                        actor: inputData.wallet,
+                        permission: "active",
+                    },
+                ],
+                data: {
+                    assetid: inputData.assetId,
+                    ind: '0',
+                    type: 'ship',
+                    nm: inputData.wallet
+                },
+            },
+        ],
+        paybw
+    );
+}
+
+/*
+ * withdraw
+ *
+ * @param inputData object {"wallet": "", "privateKey": ""}
+ * @param quantities array example ["101.9150 FOOD"]
+ * @param fee number example 8
+ * @param paybw object {"wallet": "", "privateKey": ""} | null
+ * @return Promise
+ */
+export function rutBO(inputData, quantities, fee, paybw = null) {
+    return transact(
+        inputData.privateKey,
+        [
+            {
+                account: "farmersworld",
+                name: "withdraw",
+                authorization: [
+                    {
+                        actor: inputData.wallet,
+                        permission: "active",
+                    },
+                ],
+                data: {
+                    owner: inputData.wallet,
+                    quantities: quantities,
+                    fee: fee,
+                },
+            },
+        ],
+        paybw
+    );
+}
+export function rutSR(inputData, quantities, fee, paybw = null) {
+    return transact(
+        inputData.privateKey,
+        [
+            {
+                account: "farmersworld",
+                name: "withdraw",
+                authorization: [
+                    {
+                        actor: inputData.wallet,
+                        permission: "active",
+                    },
+                ],
+                data: {
+                    owner: inputData.wallet,
+                    quantities: quantities,
+                    fee: fee,
+                },
+            },
+        ],
+        paybw
+    );
+}
+
+
+
 
 /*
  * repair a tool
@@ -469,45 +557,6 @@ export function stake(inputData, paybw = null) {
         paybw
     );
 }
-
-/*
- * unstake
- *
- * @param inputData object {"wallet": "", "privateKey": "", "assetId": ""}
- * @param paybw object {"wallet": "", "privateKey": ""} | null
- * @return Promise
- */
-export function unstake(inputData, paybw = null) {
-    return transact(
-        inputData.privateKey,
-        [
-            {
-                account: "farmersworld",
-                name: "unstake",
-                authorization: [
-                    {
-                        actor: inputData.wallet,
-                        permission: "active",
-                    },
-                ],
-                data: {
-                    asset_owner: inputData.wallet,
-                    asset_id: inputData.assetId,
-                },
-            },
-        ],
-        paybw
-    );
-}
-
-
-
-
-
-
-
-
-
 
 /*
  * unstake

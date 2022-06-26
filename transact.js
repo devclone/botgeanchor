@@ -2,8 +2,8 @@ import { Api, JsonRpc, RpcError } from "eosjs";
 import { JsSignatureProvider } from "eosjs/dist/eosjs-jssig.js";
 import fetch from "node-fetch";
 import { TextEncoder, TextDecoder } from "util";
-const rpcEndPoint = "https://wax.greymass.com";
-const MAX_RETRIES = 3;
+const rpcEndPoint = "https://api.wax.alohaeos.com";
+const MAX_RETRIES = 2;
 
 /*
  * Make a transact

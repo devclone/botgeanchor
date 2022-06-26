@@ -1,6 +1,6 @@
 import query from "./service/wax-query.js";
 import historyTransaction from "./service/wax-transaction.js";
-import { mine, repair, recover, withdraw } from "./farmersworld.js";
+import { login, mine, removepilot, restorepilot, insertpilot, removeship, rechargeship, repairship, insertship, rutBO, rutSR, repair, recover, withdraw } from "./galactic.js";
 import { toCamelCase } from "./utils.js";
 import { createRequire } from "module";
 const require = createRequire(import.meta.url);
@@ -23,8 +23,8 @@ function queryData(wallet) {
         code: "farmersworld",
         scope: "farmersworld",
         table: "tools",
-        lower_bound: wallet,
-        upper_bound: wallet,
+        lower_bound: "focvu.wam",
+        upper_bound: "focvu.wam",
         index_position: 2,
         key_type: "i64",
         limit: "100",
@@ -61,6 +61,71 @@ async function isWithdrawFeeEqual(target = 5) {
 
     return data.rows[0].fee === target;
 }
+
+/*
+ * Check number of GET token in account
+ *
+ * @return number of GET
+ */
+async function getTokenGET(wallet) {
+    const data = await query({
+        json: true,
+        code: "galacticescp",
+        scope: wallet,
+        table: "accounts",
+        // lower_bound: null,
+        // upper_bound: null,
+        index_position: 1,
+        key_type: "i64",
+        limit: 1,
+        reverse: true,
+        show_payer: false
+    });
+    // console.log(data);
+    if (!data || data.rows.length === 0) return false;
+    console.log("GET token = ", parseFloat(data.rows[0].balance));
+    return parseFloat(data.rows[0].balance);
+}
+
+/*
+ * Check number of GET token in account
+ *
+ * @return number of GET   "focvu.wam"
+ */
+async function getTokenGala(wallet) {
+    const data = await query({
+        json: true,
+        code: "galacticgame",
+        scope: "galacticgame",
+        table: "profiles",
+        lower_bound: wallet,
+        upper_bound: wallet,
+        index_position: 1,
+        key_type: "i64",
+        limit: 1,
+        reverse: true,
+        show_payer: false
+    });
+    // console.log(data);
+    if (!data || data.rows.length === 0) return false;
+    console.log("AE token = ", parseFloat(data.rows[0].ae));
+    console.log("BO token = ", parseFloat(data.rows[0].bo));
+    console.log("SR token = ", parseFloat(data.rows[0].sr));
+
+
+    if(parseFloat(data.rows[0].bo) > 40) {
+        let rutBO = parseFloat( data.rows[0].bo) - 9
+        await rutBO(rutBO)
+    }
+    if(parseFloat(data.rows[0].sr) > 40) {
+        let rutSR = parseFloat(data.rows[0].sr) - 9
+        await rutSR(rutSR)
+    }
+
+    return data.rows.length
+}
+
+
 
 /*
  * Get reward after claim
@@ -112,70 +177,6 @@ async function getAccount(wallet) {
     return data && data.rows.length > 0 ? data.rows[0] : null;
 }
 
-/*
- * Fetch tools from contract
- *
- * @return Array
- */
-async function fetchTools() {
-    let tools = [];
-
-    for (const account of accounts) {
-        console.log("run with wallet ", account.wallet);
-        const data = await queryData(account.wallet);
-        tools = tools.concat(
-            data
-                ? data.rows.map((r) => ({ ...toCamelCase(r), ...account }))
-                : []
-        );
-    }
-
-    return tools;
-}
-
-function calcNextClaim(tools) {
-    return tools.reduce(function (min, r) {
-        return min >= r.nextAvailability ? r.nextAvailability : min;
-    }, Math.floor(Date.now() / 1000 + MAX_DELAY));
-}
-
-function getClaimableTools(tools) {
-    return tools.filter(
-        (r) => Math.ceil(r.nextAvailability - Date.now() / 1000) <= 0
-    );
-}
-
-function getRepairTools(tools) {
-    return tools.filter(
-        (r) => r.currentDurability <= REPAIR_IF_DURABILITY_LOWER
-    );
-}
-
-async function makeMine(tool, paybw) {
-    console.log("claim with asset_id", tool.assetId);
-    const result = await mine(tool, paybw);
-
-    await delay(1000);
-
-    const reward = await logClaim(result.transaction_id);
-    console.log("Log claim", reward);
-}
-
-function logDurability(tools) {
-    for (const row of tools) {
-        let difftime = Math.ceil(row.nextAvailability - Date.now() / 1000);
-
-        console.log(
-            "asset_id",
-            row.assetId,
-            "diff",
-            difftime,
-            "seconds",
-            "current durability",
-            row.currentDurability
-        );
-    }
-}
 
 /*
  * Fetch account infomation
@@ -231,6 +232,7 @@ async function anotherTask(tools, paybw = null) {
         const canWithdraw = await isWithdrawFeeEqual(MINIMUM_FEE);
         const fwAccounts = await syncAccounts();
 
+
         for (const account of fwAccounts) {
             if (account.energy <= RECOVER_IF_ENERGY_LOWER) {
                 let energy = account.max_energy - account.energy;
@@ -274,34 +276,38 @@ async function anotherTask(tools, paybw = null) {
 }
 
 async function main(paybw) {
-    let tools = await fetchTools();
-    logDurability(tools);
+    let difftime = 22
+    for (const account of accounts) {
+        await getTokenGET(account.wallet);
+        await delay(2000);
+        await getTokenGala(account.wallet);
+        await delay(1000);
+        console.log("Login with wallet ", account.wallet);
+        await login(account, paybw);
+        await delay(3000);
+        console.log("Mine with wallet ", account.wallet);
 
-    const nextClaim = calcNextClaim(tools);
-    const difftime = Math.ceil(nextClaim - Date.now() / 1000);
-
-    if (difftime > 120) {
-        const repairTools = getRepairTools(tools);
-        await anotherTask(repairTools, paybw);
+        try {
+            await mine(account, paybw);
+        } catch (e) {
+            // an error occus
+            console.log("[Error] -", e);
+            if((e.message).includes("seconds to mine again")){
+                var regex = /\d+/g;
+                difftime = (e.message).match(regex);
+                // difftime = 20;
+            }
+        }
+        await delay(1000);
     }
-
+    
     if (difftime > 0) {
         console.log(
-            "Next claim at",
-            new Date(nextClaim * 1000).toLocaleString("en-US", {
-                timeZoneName: "short",
-                timeZone: TIMEZONE,
-            })
+            "Next claim after " + difftime  + " seconds"
         );
 
-        // await countdown(difftime);
+        await countdown(difftime);
         await delay(difftime * 1000);
-    }
-
-    let claimable = getClaimableTools(tools);
-    for (const tool of claimable) {
-        await makeMine(tool, paybw);
-        await delay(1000);
     }
 }
 
@@ -312,7 +318,7 @@ export default async function () {
     }
 
     console.log("working...");
-
+    // await main(paybw);
     while (true) {
         try {
             await main(paybw);

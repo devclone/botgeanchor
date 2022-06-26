@@ -1,6 +1,5 @@
 import query from "./service/wax-query.js";
 import work from "./work.js";
-import plant from "./plant.js";
 import logs from "./log.js";
 import express from "express";
 import { createRequire } from "module";
@@ -38,27 +37,25 @@ async function getHeader() {
     for (const account of accounts) {
         const data = await query({
             json: true,
-            code: "farmersworld",
-            scope: "farmersworld",
+            code: "galacticescp",
+            scope: account.wallet,
             table: "accounts",
-            lower_bound: account.wallet,
-            upper_bound: account.wallet,
+            // lower_bound: account.wallet,
+            // upper_bound: account.wallet,
             index_position: 1,
-            key_type: "",
-            limit: "100",
+            key_type: "i64",
+            limit: "1",
             reverse: false,
             show_payer: false,
         });
-
-        if (data.rows.length === 0) continue;
-
+        // if (data.rows.length === 0) continue;
+        console.log(data)
         headers.push(
-            `<font color="blue">${
+            `<font color="blue">Waller ${
                 account.wallet
-            }</font> ${data.rows[0].balances.join(" - ")}`
+            }</font> GET: ${data.rows[0].balance}`
         );
-
-        headers.push(`<p style="margin-top:2px;">energy: ${data.rows[0].energy}/${data.rows[0].max_energy}</p>`);
+        // headers.push(`<p style="margin-top:2px;">energy: ${data.rows[0].energy}/${data.rows[0].max_energy}</p>`);
     }
 
     headers = headers.map((r) =>
@@ -82,7 +79,7 @@ app.get("/", async (req, res) => {
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta http-equiv="refresh" content="300">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Farmers World Bot</title>
+    <title>Galatic Escape Bot</title>
     <style>pre{font-size: 14px}a{text-decoration: none}h4{color:#697f22;}</style>
 </head>
 <body>
@@ -97,4 +94,3 @@ app.listen(port, () => {
 });
 
 work();
-plant();
