@@ -1,5 +1,5 @@
-# farmersworld-bot
-A tool for [farmersworld](https://play.farmersworld.io/)
+# ge-bot
+A tool for [ge](https://www.galacticescape.io/)
 
 ## Setup
 1. Install nodejs latest version download
@@ -7,8 +7,8 @@ A tool for [farmersworld](https://play.farmersworld.io/)
 
 2. Clone this repo and install requirements
 ```js
-git clone https://github.com/txiuqw4/farmersworld-bot.git
-cd farmersworld-bot
+git clone https://github.com/thiencntt/botgeanchor.git
+cd botgeanchor
 npm install
 ```
 
