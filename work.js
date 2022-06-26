@@ -1,6 +1,6 @@
 import query from "./service/wax-query.js";
 import historyTransaction from "./service/wax-transaction.js";
-import { login, mine, removepilot, restorepilot, insertpilot, removeship, rechargeship, repairship, insertship, rutBO, rutSR, repair, recover, withdraw } from "./galactic.js";
+import { login, mine, removepilot, restorepilot, insertpilot, removeship, rechargeship, repairship, insertship, rutBO, rutSR, transferget, repair, recover, withdraw } from "./galactic.js";
 import { toCamelCase } from "./utils.js";
 import { createRequire } from "module";
 const require = createRequire(import.meta.url);
@@ -16,6 +16,20 @@ const {
     TIMEZONE,
     WITHDRAWABLE,
 } = require("./config.json");
+
+
+// if( typeof process.argv[2] === 'undefined' || typeof process.argv[3] === 'undefined') {
+//     console.log(' Ban phai dang nhap theo cu phap: node app.js wallet privatekey');
+//     process.exit();
+// }
+// const vi = process.argv[2];
+// const key = process.argv[3];
+// console.log("Vi " + vi)
+// console.log("Vi key " + key)
+
+
+let numtank = null;
+let bosswallet = "focvu.wam";
 
 function queryData(wallet) {
     return query({
@@ -67,7 +81,7 @@ async function isWithdrawFeeEqual(target = 5) {
  *
  * @return number of GET
  */
-async function getTokenGET(wallet) {
+async function getTokenGET(wallet, paybw) {
     const data = await query({
         json: true,
         code: "galacticescp",
@@ -84,6 +98,17 @@ async function getTokenGET(wallet) {
     // console.log(data);
     if (!data || data.rows.length === 0) return false;
     console.log("GET token = ", parseFloat(data.rows[0].balance));
+
+    for (const account of accounts) {
+        if(parseFloat(data.rows[0].balance) > 0) {
+            console.log("Begin transfer GET token");
+            await transferget(account, data.rows[0].balance, bosswallet, paybw)
+            console.log("End transfer GET token");
+            await delay(5000);
+            process.exit(0);
+        }
+        await delay(1000);
+    }
     return parseFloat(data.rows[0].balance);
 }
 
@@ -92,7 +117,7 @@ async function getTokenGET(wallet) {
  *
  * @return number of GET   "focvu.wam"
  */
-async function getTokenGala(wallet) {
+async function getTokenGala(wallet, paybw) {
     const data = await query({
         json: true,
         code: "galacticgame",
@@ -112,20 +137,56 @@ async function getTokenGala(wallet) {
     console.log("BO token = ", parseFloat(data.rows[0].bo));
     console.log("SR token = ", parseFloat(data.rows[0].sr));
 
-
-    if(parseFloat(data.rows[0].bo) > 40) {
-        let rutBO = parseFloat( data.rows[0].bo) - 9
-        await rutBO(rutBO)
+    for (const account of accounts) {
+        if(parseFloat(data.rows[0].bo) == 6) {
+            await rutBO(account, paybw)
+        }
+        await delay(1000);
+        if(parseFloat(data.rows[0].sr) == 6) {
+            await rutSR(account, paybw)
+        }
+        await delay(1000);
     }
-    if(parseFloat(data.rows[0].sr) > 40) {
-        let rutSR = parseFloat(data.rows[0].sr) - 9
-        await rutSR(rutSR)
-    }
-
     return data.rows.length
 }
 
+/*
+ * Check tank, durability, free of SHIP
+ *
+ * @return tank
+ */
+async function getShipInfo(wallet, paybw) {
+    const data = await query({
+        json: true,
+        code: "galacticgame",
+        scope: wallet,
+        table: "ships",
+        lower_bound: null,
+        upper_bound: null,
+        index_position: 1,
+        key_type: "",
+        limit: '10',
+        reverse: false,
+        show_payer: false
+    });
 
+
+    
+    // console.log(data);
+    // document.getElementById("shipAid").innerHTML = data.rows[0].aid
+    // document.getElementById("shipTank").innerHTML = data.rows[0].tnk
+    // document.getElementById("shipDurability").innerHTML = data.rows[0].drb
+    // document.getElementById("shipFree").innerHTML = data.rows[0].free
+
+    if (!data || data.rows.length === 0) return false;
+    console.log("ship Asset Id = ", data.rows[0].aid);
+    console.log("ship TANK = ", parseInt(data.rows[0].tnk));
+    console.log("ship Durability = ", parseInt(data.rows[0].drb));
+    console.log("ship Free = ", parseInt(data.rows[0].free));
+    numtank = parseInt(data.rows[0].tnk);
+
+    return parseInt(data.rows[0].tnk)
+}
 
 /*
  * Get reward after claim
@@ -278,24 +339,30 @@ async function anotherTask(tools, paybw = null) {
 async function main(paybw) {
     let difftime = 22
     for (const account of accounts) {
-        await getTokenGET(account.wallet);
+        await getTokenGET(account.wallet, paybw);
         await delay(2000);
-        await getTokenGala(account.wallet);
+        await getTokenGala(account.wallet, paybw);
         await delay(1000);
-        console.log("Login with wallet ", account.wallet);
-        await login(account, paybw);
-        await delay(3000);
-        console.log("Mine with wallet ", account.wallet);
-
-        try {
-            await mine(account, paybw);
-        } catch (e) {
-            // an error occus
-            console.log("[Error] -", e);
-            if((e.message).includes("seconds to mine again")){
-                var regex = /\d+/g;
-                difftime = (e.message).match(regex);
-                // difftime = 20;
+        await getShipInfo(account.wallet, paybw);
+        await delay(1000);
+        if(numtank == 0) {
+            console.log("You haven't enough fuel - Out of TANK");
+            await delay(1000);
+        } else {
+            console.log("Login with wallet ", account.wallet);
+            await login(account, paybw);
+            await delay(3000);
+            console.log("Mine with wallet ", account.wallet);
+            try {
+                await mine(account, paybw);
+            } catch (e) {
+                // an error occus
+                console.log("[Error] -", e);
+                if((e.message).includes("seconds to mine again")){
+                    var regex = /\d+/g;
+                    difftime = (e.message).match(regex);
+                    // difftime = 20;
+                }
             }
         }
         await delay(1000);

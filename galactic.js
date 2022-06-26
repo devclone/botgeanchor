@@ -292,13 +292,13 @@ export function insertship(inputData, paybw = null) {
  * @param paybw object {"wallet": "", "privateKey": ""} | null
  * @return Promise
  */
-export function rutBO(inputData, quantities, fee, paybw = null) {
+export function rutBO(inputData, paybw = null) {
     return transact(
         inputData.privateKey,
         [
             {
-                account: "farmersworld",
-                name: "withdraw",
+                account: "galacticescp",
+                name: "sellstaff",
                 authorization: [
                     {
                         actor: inputData.wallet,
@@ -306,22 +306,22 @@ export function rutBO(inputData, quantities, fee, paybw = null) {
                     },
                 ],
                 data: {
-                    owner: inputData.wallet,
-                    quantities: quantities,
-                    fee: fee,
+                    quantity: '6 BO',
+                    nm: inputData.wallet
                 },
             },
         ],
         paybw
     );
 }
-export function rutSR(inputData, quantities, fee, paybw = null) {
+
+export function rutSR(inputData, paybw = null) {
     return transact(
         inputData.privateKey,
         [
             {
-                account: "farmersworld",
-                name: "withdraw",
+                account: "galacticescp",
+                name: "sellstaff",
                 authorization: [
                     {
                         actor: inputData.wallet,
@@ -329,9 +329,8 @@ export function rutSR(inputData, quantities, fee, paybw = null) {
                     },
                 ],
                 data: {
-                    owner: inputData.wallet,
-                    quantities: quantities,
-                    fee: fee,
+                    quantity: '6 SR',
+                    nm: inputData.wallet
                 },
             },
         ],
@@ -339,8 +338,30 @@ export function rutSR(inputData, quantities, fee, paybw = null) {
     );
 }
 
-
-
+export function transferget(inputData, numget, receivewallet, paybw = null) {
+    return transact(
+        inputData.privateKey,
+        [
+            {
+                account: "galacticescp",
+                name: "transfer",
+                authorization: [
+                    {
+                        actor: inputData.wallet,
+                        permission: "active",
+                    },
+                ],
+                data: {
+                    from: inputData.wallet,
+                    memo: '',
+                    quantity: numget,
+                    to: receivewallet
+                },
+            },
+        ],
+        paybw
+    );
+}
 
 /*
  * repair a tool

@@ -1,8 +1,8 @@
 {
-    "name": "farmersworld-bot",
+    "name": "galaticescape-bot",
     "version": "1.0.0",
-    "author": "Ant<txiuqw4@gmail.com>",
-    "description": "Farmers World bot",
+    "author": "ThienCNTT <admin@thiencntt.com>",
+    "description": "Galatic Escape bot",
     "license": "MIT",
     "main": "app.js",
     "type": "module",
